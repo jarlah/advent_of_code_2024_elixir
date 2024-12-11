@@ -57,7 +57,7 @@ defmodule AOC2024.Day11.Part1.Solution do
   defp transform_stone_memo(stone, memo) do
     case memo |> Map.get({:transform, stone}) do
       nil ->
-        result = transform_stone_new(stone)
+        result = transform_stone(stone)
         {result, memo |> Map.put({:transform, stone}, result)}
 
       result ->
@@ -65,9 +65,9 @@ defmodule AOC2024.Day11.Part1.Solution do
     end
   end
 
-  defp transform_stone_new(0), do: [1]
+  defp transform_stone(0), do: [1]
 
-  defp transform_stone_new(stone) do
+  defp transform_stone(stone) do
     digits = trunc(:math.log10(stone)) + 1
 
     if rem(digits, 2) == 0 do
