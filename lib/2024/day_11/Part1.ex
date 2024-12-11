@@ -17,7 +17,7 @@ defmodule AOC2024.Day11.Part1.Solution do
     |> Enum.map(&String.to_integer/1)
     |> then(fn stones ->
       Enum.reduce(1..repeats, stones, fn index, acc ->
-        IO.inspect("Running pass ##{index}")
+        IO.inspect("Running pass ##{index} of #{repeats}")
         transform_stones(acc)
       end)
     end)
