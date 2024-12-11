@@ -7,19 +7,19 @@ defmodule AOC2024.Day11.Part1.Solution do
       iex> AOC2024.Day11.Part1.Solution.solution(AOC2024.Day11.Input.input(), 25)
       185205
   """
-  def solution(input, repeats, log \\ false) do
+  def solution(input, blinks, log \\ false) do
     input
     |> String.split(" ")
     |> Enum.map(&String.to_integer/1)
     |> Enum.reduce({0, %{}}, fn stone, {sum, memo} ->
-      calculate_stone_count(stone, repeats, memo, log)
+      calculate_stone_count_for_number_of_blinks(stone, blinks, memo, log)
       |> then(
         &{
           sum +
             (elem(&1, 0)
              |> tap(
                if log,
-                 do: fn sum -> IO.inspect(sum, label: "total count for stone #{stone}") end,
+                 do: fn sum -> IO.inspect(sum, label: "Count for stone #{stone}") end,
                  else: fn _ -> nil end
              )),
           elem(&1, 1)
@@ -27,22 +27,22 @@ defmodule AOC2024.Day11.Part1.Solution do
       )
     end)
     |> elem(0)
-    |> tap(if log, do: &IO.inspect(&1, label: "Total count"), else: & &1)
+    |> tap(if log, do: &IO.inspect(&1, label: "Total stone count"), else: & &1)
   end
 
-  defp calculate_stone_count(stone, repeats, memo, log) do
-    case memo |> Map.get({:repeats, repeats, stone}) do
+  defp calculate_stone_count_for_number_of_blinks(stone, blinks_left, memo, log) do
+    case memo |> Map.get({:blink, blinks_left, stone}) do
       nil ->
-        process_stone_transformations(stone, repeats, memo, log)
+        get_stone_count_for_number_of_blinks(stone, blinks_left, memo, log)
         |> then(
           &{
             elem(&1, 0)
             |> tap(
               if log,
-                do: fn sum -> IO.inspect(sum, label: "intermediate count for #{stone}") end,
+                do: fn sum -> IO.inspect(sum, label: "Intermediate count for #{stone}") end,
                 else: fn _ -> nil end
             ),
-            elem(&1, 1) |> Map.put({:repeats, repeats, stone}, elem(&1, 0))
+            elem(&1, 1) |> Map.put({:blink, blinks_left, stone}, elem(&1, 0))
           }
         )
 
@@ -51,15 +51,15 @@ defmodule AOC2024.Day11.Part1.Solution do
     end
   end
 
-  defp process_stone_transformations(_stone, 0, memo, _log), do: {1, memo}
+  defp get_stone_count_for_number_of_blinks(_stone, 0, memo, _log), do: {1, memo}
 
-  defp process_stone_transformations(stone, repeats, memo, log) do
+  defp get_stone_count_for_number_of_blinks(stone, blinks_left, memo, log) do
     {transformed, new_memo} = transform_stone_with_memo(stone, memo)
 
     Enum.map_reduce(
       transformed,
       new_memo,
-      &calculate_stone_count(&1, repeats - 1, &2, log)
+      &calculate_stone_count_for_number_of_blinks(&1, blinks_left - 1, &2, log)
     )
     |> then(
       &{
