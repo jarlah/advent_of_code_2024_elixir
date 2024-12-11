@@ -3,7 +3,7 @@ defmodule AdventOfCodeTest do
 
   @moduletag timeout: :infinity
 
-  years = 2024..2080
+  years = 2015..2080
   days = 1..25
   parts = 1..2
 
@@ -11,8 +11,7 @@ defmodule AdventOfCodeTest do
     doctest_module = :"Elixir.AOC#{year}.Day#{day}.Part#{part}.Solution"
 
     if Code.ensure_loaded?(doctest_module) do
-      @tag year: "#{year}"
-      @tag day: "#{day}.part#{part}"
+      @tag day: "#{year}.d#{day}.p#{part}"
       doctest doctest_module
     end
   end
