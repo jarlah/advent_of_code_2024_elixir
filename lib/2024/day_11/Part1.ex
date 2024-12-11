@@ -54,11 +54,11 @@ defmodule AOC2024.Day11.Part1.Solution do
   defp get_stone_count_for_number_of_blinks(_stone, 0, memo, _log), do: {1, memo}
 
   defp get_stone_count_for_number_of_blinks(stone, blinks_left, memo, log) do
-    {transformed, new_memo} = transform_stone_with_memo(stone, memo)
+    transformed = transform_stone(stone)
 
     Enum.map_reduce(
       transformed,
-      new_memo,
+      memo,
       &calculate_stone_count_for_number_of_blinks(&1, blinks_left - 1, &2, log)
     )
     |> then(
@@ -67,17 +67,6 @@ defmodule AOC2024.Day11.Part1.Solution do
         elem(&1, 1)
       }
     )
-  end
-
-  defp transform_stone_with_memo(stone, memo) do
-    case memo |> Map.get({:stones, stone}) do
-      nil ->
-        stones = transform_stone(stone)
-        {stones, memo |> Map.put({:stones, stone}, stones)}
-
-      stones ->
-        {stones, memo}
-    end
   end
 
   defp transform_stone(0), do: [1]
