@@ -12,36 +12,47 @@ defmodule AOC2024.Day11.Part1.Solution do
     |> String.split(" ")
     |> Enum.map(&String.to_integer/1)
     |> Enum.reduce({0, %{}}, fn stone, {sum, memo} ->
-      {count, new_memo} = count_after_transforms(stone, repeats, memo)
-      {sum + count, new_memo}
+      calculate_stone_count(stone, repeats, memo)
+      |> then(
+        &{
+          sum + elem(&1, 0),
+          elem(&1, 1)
+        }
+      )
     end)
     |> elem(0)
   end
 
-  defp count_after_transforms(stone, repeats, memo) do
+  defp calculate_stone_count(stone, repeats, memo) do
     case memo |> Map.get({stone, repeats}) do
       nil ->
-        {count, new_memo} =
-          do_count_after_transforms(stone, repeats, memo)
-
-        {count, new_memo |> Map.put({stone, repeats}, count)}
+        process_stone_transformations(stone, repeats, memo)
+        |> then(
+          &{
+            elem(&1, 0),
+            elem(&1, 1) |> Map.put({stone, repeats}, elem(&1, 0))
+          }
+        )
 
       count ->
         {count, memo}
     end
   end
 
-  defp do_count_after_transforms(_stone, 0, memo), do: {1, memo}
+  defp process_stone_transformations(_stone, 0, memo), do: {1, memo}
 
-  defp do_count_after_transforms(stone, repeats, memo) do
+  defp process_stone_transformations(stone, repeats, memo) do
     {transformed, new_memo} = transform_stone_memo(stone, memo)
 
-    {counts, final_memo} =
-      Enum.map_reduce(transformed, new_memo, fn s, m ->
-        count_after_transforms(s, repeats - 1, m)
-      end)
-
-    {Enum.sum(counts), final_memo}
+    Enum.map_reduce(transformed, new_memo, fn s, m ->
+      calculate_stone_count(s, repeats - 1, m)
+    end)
+    |> then(
+      &{
+        Enum.sum(elem(&1, 0)),
+        elem(&1, 1)
+      }
+    )
   end
 
   defp transform_stone_memo(stone, memo) do
