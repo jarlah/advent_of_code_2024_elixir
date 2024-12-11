@@ -2,57 +2,80 @@ defmodule AOC2024.Day11.Part1.Solution do
   @doc ~S"""
   ## Examples
 
-      iex> AOC2024.Day11.Part1.Solution.transform_stone(70949)
-      [143600776]
-      iex> AOC2024.Day11.Part1.Solution.split_number(25645645)
-      [2564, 5645]
       iex> AOC2024.Day11.Part1.Solution.solution(AOC2024.Day11.Input.test_input(), 6)
       22
       iex> AOC2024.Day11.Part1.Solution.solution(AOC2024.Day11.Input.input(), 25)
       185205
   """
   def solution(input, repeats) do
-    input
-    |> String.split(" ")
-    |> Enum.map(&String.to_integer/1)
-    |> then(fn stones ->
-      Enum.reduce(1..repeats, stones, fn index, acc ->
-        IO.inspect("Running pass ##{index} of #{repeats}")
-        transform_stones(acc)
-      end)
+    memo = %{}
+
+    stones =
+      input
+      |> String.split(" ")
+      |> Enum.map(&String.to_integer/1)
+
+    total_stones = length(stones)
+
+    stones
+    |> Enum.reduce({0, memo}, fn stone, {sum, memo} ->
+      {count, new_memo} = count_after_transforms(stone, repeats, memo, 1, total_stones)
+      {sum + count, new_memo}
     end)
-    |> Enum.count()
+    |> elem(0)
   end
 
-  def transform_stone(stone, acc \\ [])
-  def transform_stone(0, acc), do: acc ++ [1]
+  defp count_after_transforms(stone, repeats, memo, current_stone, total_stones) do
+    case Map.get(memo, {stone, repeats}) do
+      nil ->
+        # IO.puts("Processing stone #{current_stone}/#{total_stones}: #{stone} (#{repeats} repeats left)")
+        {count, new_memo} =
+          do_count_after_transforms(stone, repeats, memo, current_stone, total_stones)
 
-  def transform_stone(stone, acc) do
-    if rem(count_digits(stone), 2) == 0,
-      do: acc ++ split_number(stone),
-      else: acc ++ [stone * 2024]
+        {count, Map.put(new_memo, {stone, repeats}, count)}
+
+      count ->
+        # IO.puts("Cache hit for stone #{current_stone}/#{total_stones}: #{stone} (#{repeats} repeats left)")
+        {count, memo}
+    end
   end
 
-  defp transform_stones(stones, acc \\ [])
-  defp transform_stones([], acc), do: acc
+  defp do_count_after_transforms(_stone, 0, memo, _current_stone, _total_stones), do: {1, memo}
 
-  defp transform_stones([stone | tail], acc) do
-    transform_stones(tail, transform_stone(stone, acc))
+  defp do_count_after_transforms(stone, repeats, memo, current_stone, total_stones) do
+    {transformed, new_memo} = transform_stone_memo(stone, memo)
+
+    {counts, final_memo} =
+      transformed
+      |> Enum.map_reduce(new_memo, fn s, m ->
+        count_after_transforms(s, repeats - 1, m, current_stone, total_stones)
+      end)
+
+    {counts |> Enum.sum(), final_memo}
   end
 
-  def split_number(number) when is_integer(number) do
-    digits = count_digits(number)
-    half_digits = div(digits, 2)
-    divisor = :math.pow(10, half_digits)
-    left = div(number, round(divisor))
-    right = rem(number, round(divisor))
-    [left, right]
+  defp transform_stone_memo(stone, memo) do
+    case memo |> Map.get({:transform, stone}) do
+      nil ->
+        result = transform_stone_new(stone)
+        {result, memo |> Map.put({:transform, stone}, result)}
+
+      result ->
+        {result, memo}
+    end
   end
 
-  def count_digits(number) when is_integer(number) do
-    number
-    |> :math.log10()
-    |> floor()
-    |> Kernel.+(1)
+  defp transform_stone_new(0), do: [1]
+
+  defp transform_stone_new(stone) do
+    digits = trunc(:math.log10(stone)) + 1
+
+    if rem(digits, 2) == 0 do
+      half_digits = div(digits, 2)
+      divisor = trunc(:math.pow(10, half_digits))
+      [div(stone, divisor), rem(stone, divisor)]
+    else
+      [stone * 2024]
+    end
   end
 end
