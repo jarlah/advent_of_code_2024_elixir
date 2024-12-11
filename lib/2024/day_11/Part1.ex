@@ -27,6 +27,7 @@ defmodule AOC2024.Day11.Part1.Solution do
       )
     end)
     |> elem(0)
+    |> tap(if log, do: &IO.inspect(&1, label: "Total count"), else: & &1)
   end
 
   defp calculate_stone_count(stone, repeats, memo, log) do
